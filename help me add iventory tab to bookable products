@@ -1,0 +1,66 @@
+/**
+ * Add Inventory Settings for Bookable Products
+ */
+function add_inventory_settings_for_bookable_products() {
+    global $post;
+
+    // Check if it's a bookable product (product type is 'booking').
+    if ( 'booking' === get_post_meta( $post->ID, '_booking_duration_type', true ) ) {
+        woocommerce_wp_checkbox(
+            array(
+                'id'            => '_manage_stock',
+                'label'         => __( 'Manage Stock', 'woocommerce' ),
+                'desc_tip'      => true,
+                'description'   => __( 'Enable stock management at product level', 'woocommerce' ),
+                'value'         => get_post_meta( $post->ID, '_manage_stock', true ),
+            )
+        );
+
+        woocommerce_wp_text_input(
+            array(
+                'id'            => '_stock',
+                'label'         => __( 'Stock Quantity', 'woocommerce' ),
+                'desc_tip'      => true,
+                'description'   => __( 'Stock amount of the product', 'woocommerce' ),
+                'type'          => 'number',
+                'custom_attributes' => array(
+                    'step'  => '1',
+                    'min'   => '0',
+                ),
+                'value'         => get_post_meta( $post->ID, '_stock', true ),
+            )
+        );
+
+        woocommerce_wp_checkbox(
+            array(
+                'id'            => '_backorders',
+                'label'         => __( 'Allow Backorders', 'woocommerce' ),
+                'desc_tip'      => true,
+                'description'   => __( 'Allow backorders for this product', 'woocommerce' ),
+                'value'         => get_post_meta( $post->ID, '_backorders', true ),
+            )
+        );
+    }
+}
+add_action( 'woocommerce_product_options_inventory_product_data', 'add_inventory_settings_for_bookable_products' );
+
+/**
+ * Save Inventory Settings for Bookable Products
+ */
+function save_inventory_settings_for_bookable_products( $product_id ) {
+    // Check if it's a bookable product (product type is 'booking').
+    if ( 'booking' === get_post_meta( $product_id, '_booking_duration_type', true ) ) {
+        // Manage Stock
+        $manage_stock = isset( $_POST['_manage_stock'] ) ? 'yes' : 'no';
+        update_post_meta( $product_id, '_manage_stock', $manage_stock );
+
+        // Stock Quantity
+        $stock = isset( $_POST['_stock'] ) ? wc_stock_amount( $_POST['_stock'] ) : '';
+        update_post_meta( $product_id, '_stock', $stock );
+
+        // Backorders
+        $backorders = isset( $_POST['_backorders'] ) ? 'yes' : 'no';
+        update_post_meta( $product_id, '_backorders', $backorders );
+    }
+}
+add_action( 'woocommerce_process_product_meta', 'save_inventory_settings_for_bookable_products' );
